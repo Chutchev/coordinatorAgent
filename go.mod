@@ -4,4 +4,7 @@ go 1.25.1
 
 require github.com/Chutchev/goagent v0.4.0
 
-require github.com/sethvargo/go-envconfig v1.3.0 // indirect
+require (
+	github.com/go-chi/chi/v5 v5.2.5 // indirect
+	github.com/sethvargo/go-envconfig v1.3.0 // indirect
+)

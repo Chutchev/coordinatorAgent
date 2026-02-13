@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/Chutchev/coordinatorAgent/internal/http/server"
 	"github.com/Chutchev/goagent/pkg/agent"
 	"github.com/Chutchev/goagent/pkg/clients/llm"
 	"github.com/Chutchev/goagent/pkg/config"
@@ -95,6 +96,11 @@ func (c *Coordinator) do(userText string) {
 	fmt.Println(r.Choices[0].Message.Content)
 }
 
+func (c *Coordinator) RunHTTP() {
+	s := server.NewServer("0.0.0.0", 8080)
+	s.Start()
+}
+
 func (c *Coordinator) Run() {
 	go c.survey()
 	switch c.GetMode() {
@@ -102,8 +108,8 @@ func (c *Coordinator) Run() {
 		go c.runInteractive()
 	//case "grpc":
 	//	go c.runGRPC()
-	//case "http":
-	//	go c.runHTTP()
+	case "http":
+		go c.RunHTTP()
 	default:
 		log.Fatal("")
 	}

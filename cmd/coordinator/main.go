@@ -8,7 +8,7 @@ import (
 func main() {
 	systemPromptFile := flag.String("spf", "prompts/coordinator_agent_prompt.txt", "system prompt file")
 	botName := flag.String("bot", "coordinator", "bot name")
-	mode := flag.String("mode", "i", "agent mode. interactive/http/grpc")
+	mode := flag.String("mode", "http", "agent mode. interactive/http/grpc")
 	flag.Parse()
 
 	newAgent := coordinator.NewCoordinator(systemPromptFile, *botName, *mode)
