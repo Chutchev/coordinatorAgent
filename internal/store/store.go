@@ -53,12 +53,14 @@ func (s *AgentStore) Delete(key string) error {
 	return nil
 }
 
-func (s *AgentStore) Pop(key string) (interface{}, error) {
+func (s *AgentStore) Pop() (interface{}, bool) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+	keys := s.AllKeys()
+	key := keys[len(keys)-1]
 	if v, ok := s.data[key]; ok {
 		delete(s.data, key)
-		return v, nil
+		return v, true
 	}
-	return nil, errors.New("not found")
+	return nil, false
 }

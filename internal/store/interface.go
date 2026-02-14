@@ -4,7 +4,7 @@ type StoreInterface interface {
 	Get(string) (interface{}, error)
 	Set(string, interface{}) error
 	Delete(string) error
-	Pop(string) (interface{}, error)
+	Pop() (interface{}, bool)
 	AllKeys() []string
 	GetData() map[string]interface{}
 }

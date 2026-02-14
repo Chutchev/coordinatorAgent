@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 	//"time"
 )
 
@@ -23,6 +24,7 @@ type Coordinator struct {
 	userPrompt   string
 	*agent.Agent
 	agents store.StoreInterface
+	tasks  store.StoreInterface
 }
 
 func NewCoordinator(promptFile *string, name, mode string) *Coordinator {
@@ -37,6 +39,7 @@ func NewCoordinator(promptFile *string, name, mode string) *Coordinator {
 	return &Coordinator{
 		Agent:  agent.NewAgent(string(systemPrompt), string(userPrompt), name, mode),
 		agents: store.NewAgentStore(),
+		tasks:  store.NewTaskStore(),
 	}
 }
 
@@ -97,8 +100,8 @@ func (c *Coordinator) do(userText string) {
 	fmt.Println(r.Choices[0].Message.Content)
 }
 
-func (c *Coordinator) RunHTTP(agentStore store.StoreInterface) {
-	s := server.NewServer("0.0.0.0", 8080, agentStore)
+func (c *Coordinator) RunHTTP(agentStore, taskStore store.StoreInterface) {
+	s := server.NewServer("0.0.0.0", 8080, agentStore, taskStore)
 	s.Start()
 }
 
@@ -110,7 +113,7 @@ func (c *Coordinator) Run() {
 	//case "grpc":
 	//	go c.runGRPC()
 	case "http":
-		go c.RunHTTP(c.agents)
+		go c.RunHTTP(c.agents, c.tasks)
 	default:
 		log.Fatal("")
 	}
@@ -123,9 +126,18 @@ func (c *Coordinator) Run() {
 }
 
 func (c *Coordinator) survey() {
-	//c.agents = []string{"developer", "analytic", "architector"}
-	//for {
-	//	slog.Info("survey")
-	//	time.Sleep(10 * time.Second)
-	//}
+	for {
+		slog.Info("Проверка заданий...")
+		task, ok := c.tasks.Pop()
+		slog.Info("task:", task)
+		slog.Info("ok:", ok)
+		if !ok {
+			slog.Info("Нет заданий...")
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		slog.Info("Выполнение таски: %v", task)
+		c.do(task.(string))
+	}
+
 }
