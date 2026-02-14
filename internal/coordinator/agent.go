@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Chutchev/coordinatorAgent/internal/http/server"
+	"github.com/Chutchev/coordinatorAgent/internal/store"
 	"github.com/Chutchev/goagent/pkg/agent"
 	"github.com/Chutchev/goagent/pkg/clients/llm"
 	"github.com/Chutchev/goagent/pkg/config"
@@ -21,7 +22,7 @@ type Coordinator struct {
 	systemPrompt string
 	userPrompt   string
 	*agent.Agent
-	agents []string
+	agents store.StoreInterface
 }
 
 func NewCoordinator(promptFile *string, name, mode string) *Coordinator {
@@ -35,7 +36,7 @@ func NewCoordinator(promptFile *string, name, mode string) *Coordinator {
 	}
 	return &Coordinator{
 		Agent:  agent.NewAgent(string(systemPrompt), string(userPrompt), name, mode),
-		agents: make([]string, 0),
+		agents: store.NewAgentStore(),
 	}
 }
 
@@ -68,7 +69,7 @@ func (c *Coordinator) do(userText string) {
 		cfg.LLMConfig.LLMToken,
 	)
 	replacer := strings.NewReplacer(
-		"{AgentsList}", strings.Join(c.agents, ","),
+		"{AgentsList}", strings.Join(c.agents.AllKeys(), ","),
 		"{UserPrompt}", userText,
 	)
 	up := replacer.Replace(c.GetUserPrompt())
@@ -96,8 +97,8 @@ func (c *Coordinator) do(userText string) {
 	fmt.Println(r.Choices[0].Message.Content)
 }
 
-func (c *Coordinator) RunHTTP() {
-	s := server.NewServer("0.0.0.0", 8080)
+func (c *Coordinator) RunHTTP(agentStore store.StoreInterface) {
+	s := server.NewServer("0.0.0.0", 8080, agentStore)
 	s.Start()
 }
 
@@ -109,7 +110,7 @@ func (c *Coordinator) Run() {
 	//case "grpc":
 	//	go c.runGRPC()
 	case "http":
-		go c.RunHTTP()
+		go c.RunHTTP(c.agents)
 	default:
 		log.Fatal("")
 	}
@@ -122,7 +123,7 @@ func (c *Coordinator) Run() {
 }
 
 func (c *Coordinator) survey() {
-	c.agents = []string{"developer", "analytic", "architector"}
+	//c.agents = []string{"developer", "analytic", "architector"}
 	//for {
 	//	slog.Info("survey")
 	//	time.Sleep(10 * time.Second)
